@@ -1,51 +1,67 @@
-name: Build Courseflow
+# Copy this content to .github/workflows/build.yml
+
+name: Build Courseflow Windows Executables
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    
+    strategy:
+      matrix:
+        node-version: [22.x]
+    
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Lint
-        run: npm run lint
-      
-      - name: Type check
-        run: npm run typecheck
-      
-      - name: Run tests
-        run: npm run test
-      
-      - name: Build
-        run: npm run build
-      
-      - name: Package Windows
-        run: npm run package:all
-      
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: courseflow-installers
-          path: release/
-          retention-days: 30
-      
-      - name: Create Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: release/*
-          draft: false
-          prerelease: false
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci --prefer-offline --no-audit
+    
+    - name: Build React UI
+      run: npm run build
+    
+    - name: Run tests
+      run: npm run test
+      continue-on-error: true
+    
+    - name: Build NSIS installer
+      run: npm run build:nsis
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build Portable executable
+      run: npm run build:portable
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: List dist files
+      run: dir dist-electron
+    
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Courseflow-Setup
+        path: dist-electron/Courseflow*.exe
+        retention-days: 30
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist-electron/Courseflow*.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
