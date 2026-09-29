@@ -1,7 +1,7 @@
 # Copy this content to .github/workflows/build.yml
 
 name: Build Courseflow Windows Executables
-
+ 
 on:
   push:
     branches: [ main ]
