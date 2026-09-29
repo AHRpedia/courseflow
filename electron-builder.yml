@@ -1,0 +1,37 @@
+appId: com.courseflow.app
+productName: Courseflow
+directories:
+  buildResources: assets
+  output: dist-electron
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  certificateFile: null
+  certificatePassword: null
+  signingHashAlgorithms:
+    - sha256
+  sign: null
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Courseflow
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  installerHeaderIcon: assets/icon.ico
+
+portable:
+  artifactName: ${productName}-Portable-${version}.exe
+
+publish:
+  provider: github
+  owner: AHRpedia
+  repo: courseflow
